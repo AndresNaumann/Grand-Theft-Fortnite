@@ -88,3 +88,37 @@ kbd {
   border-radius: 5px;
   background: #fff;
 }
+
+.attribution {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  padding: 3px 8px;
+  border-top-left-radius: 8px;
+  background: var(--card);
+  font-size: 12px;
+  pointer-events: auto;
+}
+
+.attribution a {
+  color: var(--ink);
+}
+
+.hud-debug {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom-right-radius: 8px;
+  background: rgba(27, 27, 47, 0.8);
+  color: #f5f5f5;
+  font: 12px/1.45 ui-monospace, Consolas, monospace;
+}
+
+.error {
+  max-width: 420px;
+  text-align: center;
+  color: #b00020;
+  opacity: 1 !important;
+}

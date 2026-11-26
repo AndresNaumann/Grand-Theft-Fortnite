@@ -12,7 +12,8 @@
     "preview": "pnpm --filter @polyworld/web preview",
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "eslint .",
-    "test": "pnpm -r --if-present test"
+    "test": "pnpm -r --if-present test",
+    "fetch-area": "node tools/fetch-area/src/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

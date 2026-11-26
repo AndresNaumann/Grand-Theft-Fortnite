@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hashString, rngFor } from "../src/rng";
+import { hashString, rngFor } from "../src/rng.ts";
 
 const take = (n: number, f: () => number) => Array.from({ length: n }, f);
 

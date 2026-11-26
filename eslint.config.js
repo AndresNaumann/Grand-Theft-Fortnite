@@ -29,6 +29,8 @@ export default tseslint.config(
         { name: "document", message: "worldgen is pure: no DOM." },
         { name: "fetch", message: "worldgen is pure: no network." },
       ],
+      // Node types are available for tests only; src must stay runtime-agnostic.
+      "no-restricted-imports": ["error", { patterns: [{ group: ["node:*"], message: "worldgen is pure: no Node APIs." }] }],
       "no-restricted-properties": [
         "error",
         { object: "Math", property: "random", message: "Use rng.ts seeded by OSM id." },

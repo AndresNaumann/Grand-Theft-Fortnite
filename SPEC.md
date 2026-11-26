@@ -383,12 +383,12 @@ Each milestone is one or more PRs. A milestone is done only when every box is ch
 - [ ] CI (GitHub Actions) runs typecheck, lint, and test on PRs. *(Workflow written and every step passes locally; check this box after the first green run on GitHub.)*
 
 ### M1 — Real city from OSM
-- [ ] `tools/fetch-area` saves the configured bbox to `data/<area>.osm.json`.
-- [ ] `generateWorld()` produces buildings, roads, areas, water, and trees from the fixture, with unit tests for projection, height resolution, and road width.
-- [ ] Worldgen runs in a Web Worker and transfers geometry buffers to the main thread.
-- [ ] Buildings have trimesh colliders: given the player walks into a building wall, then the player stops and does not tunnel.
-- [ ] Generation is deterministic: the same input produces byte-identical position buffers (test asserts a hash).
-- [ ] The "© OpenStreetMap contributors" attribution is always visible.
+- [x] `tools/fetch-area` saves the configured bbox to `data/<area>.osm.json`.
+- [x] `generateWorld()` produces buildings, roads, areas, water, and trees from the fixture, with unit tests for projection, height resolution, and road width.
+- [x] Worldgen runs in a Web Worker and transfers geometry buffers to the main thread.
+- [x] Buildings have trimesh colliders: given the player walks into a building wall, then the player stops and does not tunnel. *(Verified by a headless playtest, not yet in CI: 3 sprints into head-on walls each stopped 0.37 m short.)*
+- [x] Generation is deterministic: the same input produces byte-identical position buffers (test asserts a hash).
+- [x] The "© OpenStreetMap contributors" attribution is always visible.
 
 ### M2 — The look
 - [ ] Toon materials, palette, outlines, fog, and shadows are implemented per §7.
@@ -439,7 +439,16 @@ Each milestone is one or more PRs. A milestone is done only when every box is ch
 | 7 | 2026-11-26 | The M0 debug overlay is drei `<Stats>` plus Rapier collider wireframes. `r3f-perf` is deferred to M2. | No new runtime dependency for M0. `r3f-perf`'s draw-call counter matters for the M2 ≤ 300 budget. |
 | 8 | 2026-11-26 | The canvas uses `NoToneMapping` (R3F `flat`), with the sun at 2.4 and the hemisphere light at 2.0. | Palette hexes render as authored. ACES tone mapping desaturated the palette. |
 | 9 | 2026-11-26 | Character adds a jump buffer (0.15 s) and coyote time (0.1 s) on top of §8.2. Jump is edge-triggered, so holding Space does not bunny-hop. | Taps shorter than one 60 Hz physics step were being dropped. Found in the M0 playtest. |
-| 10 | 2026-11-26 | M0 ships a movement test course (steps, wall, ramps) behind `WORLD.features.testCourse`. `rng.ts` landed in M0 as the subject of the required worldgen test. | Verifies autostep and collision before city geometry exists. `rng.ts` is tiny, and §15.2 depends on it. Disable the course in M1. |
+| 10 | 2026-11-26 | M0 ships a movement test course (steps, wall, ramps) behind `WORLD.features.testCourse`. `rng.ts` landed in M0 as the subject of the required worldgen test. | Verifies autostep and collision before city geometry exists. `rng.ts` is tiny, and §15.2 depends on it. **The course was removed in M1.** |
+| 11 | 2026-11-26 | M1 runtime deps: `earcut` 3.2.4 and `osmtogeojson` 3.0.0-beta.5, both in `packages/worldgen`. `@types/node` added to worldgen for tests only. | Both are listed in §3. ESLint forbids `node:*` imports in `worldgen/src`, so Node types can't leak into the pure code. |
+| 12 | 2026-11-26 | worldgen imports use explicit `.ts` extensions (`allowImportingTsExtensions` and `erasableSyntaxOnly` in the base tsconfig). | Node 26 runs worldgen and `tools/*` directly with native type stripping, with no build step or `tsx`. M4's bake gets this for free. |
+| 13 | 2026-11-26 | **Deviation from §8.5:** the ground collider is 100 cuboid tiles of 200 m, not one large cuboid. | With one 2 km cuboid, Rapier's character controller sank the capsule about 17 cm into the ground while walking. This reproduces in plain Rapier and is a float-precision issue in shape casts against huge boxes. With tiles it stays within 2 mm, including across seams. |
+| 14 | 2026-11-26 | Flat ground layers also use `depthWrite: false` plus `renderOrder`, on top of the §6.6 y-offsets and `polygonOffset`. Within a layer, overlapping areas are sorted by a style priority. | Overlaps then resolve by draw order at any distance or angle, not by depth precision. Buildings and characters still occlude them correctly because depth testing stays on. |
+| 15 | 2026-11-26 | `palette.ts` moved to `packages/worldgen` (the web app re-exports it) and gained `trunk: #8D6346`. | Vertex colors are baked in worldgen. Tree trunks needed a color, and every color must come from the palette. |
+| 16 | 2026-11-26 | Resolver details beyond §6.4–6.7: feet units (`'`, `ft`) are parsed. `*_link` roads use their parent class. `tunnel=yes`, `building_passage` and `culvert` are not drawn. Urban landuse (residential, commercial, …) is not drawn and shows as ground. Waterway ribbons are river 10 m, canal 6 m, stream 2 m. The miter clamp means 2× the half-width. A bottom cap is drawn only when a building's base is ≥ 0.5 m. | These cases came up in the Back Bay data, and the spec didn't cover them. |
+| 17 | 2026-11-26 | Tree scatter uses a jittered grid (one candidate per 80 m² cell, keyed by polygon id) with 3 m minimum spacing, instead of Bridson Poisson-disc. Mapped `natural=tree` nodes skip the 2 m road clearance. Trees are already instanced (2 draw calls). | It gives the same blue-noise look in a simpler, fully deterministic form. Street trees sit next to roads by definition. |
+| 18 | 2026-11-26 | Worldgen picks the spawn (the nearest road or footway point to the origin that isn't inside a building). The boundary walls from §8.5 landed in M1. A dev-only `window.__polyworld` hook (position, aim, raycast) is used by playtests and stripped from production builds. | The origin can fall inside a building. A finite city needs its edges closed. The hook makes the M1 tunneling check scriptable. |
+| 19 | 2026-11-26 | §6.3's projection constants are equatorial. At Boston's latitude, north–south distances come out about 0.47% short (≈ 3 m over the area), not "well under 1 m". **Kept as specified.** | The distortion is uniform, so shapes and angles are unaffected. Switching to latitude-dependent meters-per-degree is a one-line change if absolute accuracy ever matters (see §14). |
 
 ## 14. Open questions
 
@@ -450,6 +459,7 @@ Each milestone is one or more PRs. A milestone is done only when every box is ch
 | Arcade vs. semi-sim driving feel | Andrew + whoever tunes M3 | No |
 | Which LLM and budget for M5 enrichment | Andrew | Blocks M5 only |
 | Public deploy: rely on baked data only, or proxy and cache Overpass? | Eng | Blocks public launch |
+| Projection: keep §6.3's equatorial constants (≈0.5% N–S scale error) or use latitude-dependent ones? See Decision #19. | Andrew | No |
 
 ## 15. Rules for coding agents
 

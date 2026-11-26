@@ -10,8 +10,7 @@ import {
   type RapierRigidBody,
 } from "@react-three/rapier";
 import type { Group, Object3D } from "three";
-import { WORLD } from "../config/world.config";
-import { PALETTE } from "../style/palette";
+import { Avatar } from "./Avatar";
 import { type Control, look } from "./input";
 
 /** Character tuning (SPEC §8.2). */
@@ -46,9 +45,11 @@ type KinematicCharacterController = ReturnType<
 interface Props {
   /** Receives the interpolated visual root; the follow camera tracks it. */
   targetRef: RefObject<Object3D | null>;
+  /** Spawn point in local meters (capsule center). */
+  spawn: readonly [number, number, number];
 }
 
-export function Character({ targetRef }: Props) {
+export function Character({ targetRef, spawn }: Props) {
   const { world } = useRapier();
   const bodyRef = useRef<RapierRigidBody>(null);
   const colliderRef = useRef<RapierCollider>(null);
@@ -67,6 +68,8 @@ export function Character({ targetRef }: Props) {
     jumpBuffer: 0,
     coyote: 0,
   });
+
+  useDevTestHook(bodyRef, colliderRef);
 
   // Latch jump on key-down (edge-triggered) instead of polling, so short taps are never missed.
   useEffect(
@@ -151,7 +154,7 @@ export function Character({ targetRef }: Props) {
 
     const p = body.translation();
     if (p.y < CHARACTER.killY) {
-      const [x, y, z] = WORLD.spawn;
+      const [x, y, z] = spawn;
       body.setTranslation({ x, y, z }, true);
       s.vx = s.vy = s.vz = 0;
       return;
@@ -159,19 +162,13 @@ export function Character({ targetRef }: Props) {
     body.setNextKinematicTranslation({ x: p.x + move.x, y: p.y + move.y, z: p.z + move.z });
   });
 
-  // Visual-only: turn toward movement, simple walk bob.
-  useFrame((state, delta) => {
+  // Visual-only: turn toward the movement direction.
+  useFrame((_, delta) => {
     const avatar = avatarRef.current;
     if (!avatar) return;
-    const s = sim.current;
-    let diff = s.facing - avatar.rotation.y;
+    let diff = sim.current.facing - avatar.rotation.y;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
     avatar.rotation.y += diff * (1 - Math.exp(-14 * delta));
-
-    const moving = s.grounded && s.moveSpeed > 0.5;
-    const freq = s.moveSpeed > CHARACTER.walkSpeed + 0.5 ? 16 : 11;
-    const bob = moving ? Math.abs(Math.sin(state.clock.elapsedTime * freq)) * 0.08 : 0;
-    avatar.position.y += (bob - avatar.position.y) * (1 - Math.exp(-20 * delta));
   });
 
   return (
@@ -179,54 +176,51 @@ export function Character({ targetRef }: Props) {
       ref={bodyRef}
       type="kinematicPosition"
       colliders={false}
-      position={[...WORLD.spawn]}
+      position={[...spawn]}
       enabledRotations={[false, false, false]}
     >
       <CapsuleCollider ref={colliderRef} args={[CHARACTER.halfHeight, CHARACTER.radius]} />
       <group ref={targetRef}>
         <group ref={avatarRef}>
-          <Avatar />
+          <Avatar motion={sim} feetOffset={CENTER_TO_FEET} fullSpeed={CHARACTER.sprintSpeed} />
         </group>
       </group>
     </RigidBody>
   );
 }
 
-/** MVP capsule-person (SPEC §8.2). Faces +z in local space. Origin = capsule center. */
-function Avatar() {
-  const bodyColor = PALETTE.walls[2];
-  const skin = PALETTE.walls[0];
-  const dark = PALETTE.outline;
-  return (
-    <group position={[0, -CENTER_TO_FEET, 0]}>
-      {/* legs */}
-      <mesh position={[-0.13, 0.25, 0]}>
-        <capsuleGeometry args={[0.1, 0.3, 4, 8]} />
-        <meshLambertMaterial color={PALETTE.roofs[2]} />
-      </mesh>
-      <mesh position={[0.13, 0.25, 0]}>
-        <capsuleGeometry args={[0.1, 0.3, 4, 8]} />
-        <meshLambertMaterial color={PALETTE.roofs[2]} />
-      </mesh>
-      {/* torso */}
-      <mesh position={[0, 0.85, 0]}>
-        <capsuleGeometry args={[0.28, 0.4, 6, 12]} />
-        <meshLambertMaterial color={bodyColor} />
-      </mesh>
-      {/* head */}
-      <mesh position={[0, 1.48, 0]}>
-        <sphereGeometry args={[0.25, 16, 12]} />
-        <meshLambertMaterial color={skin} />
-      </mesh>
-      {/* eyes (show facing) */}
-      <mesh position={[-0.09, 1.52, 0.22]}>
-        <sphereGeometry args={[0.04, 8, 6]} />
-        <meshBasicMaterial color={dark} />
-      </mesh>
-      <mesh position={[0.09, 1.52, 0.22]}>
-        <sphereGeometry args={[0.04, 8, 6]} />
-        <meshBasicMaterial color={dark} />
-      </mesh>
-    </group>
-  );
+/**
+ * Dev-only handle for automated playtests (window.__polyworld). Stripped from production builds.
+ * Lets a headless test aim the player, raycast for walls, and read the position.
+ */
+function useDevTestHook(
+  bodyRef: RefObject<RapierRigidBody | null>,
+  colliderRef: RefObject<RapierCollider | null>,
+) {
+  const { world, rapier } = useRapier();
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const hook = {
+      position: () => bodyRef.current?.translation() ?? null,
+      setYaw: (yaw: number) => {
+        look.yaw = yaw;
+      },
+      /** First collider along a horizontal direction from the player's chest: distance (m), facing, handle. */
+      castRay: (dx: number, dz: number, maxDistance = 200) => {
+        const p = bodyRef.current?.translation();
+        if (!p) return null;
+        const len = Math.hypot(dx, dz);
+        const ray = new rapier.Ray({ x: p.x, y: p.y + 0.3, z: p.z }, { x: dx / len, y: 0, z: dz / len });
+        const hit = world.castRayAndGetNormal(ray, maxDistance, true, undefined, undefined, colliderRef.current ?? undefined);
+        if (!hit) return null;
+        // facing < 0: the ray hit the front of a surface; > 0: it hit a back face.
+        const facing = (hit.normal.x * dx + hit.normal.z * dz) / len;
+        return { distance: hit.timeOfImpact, facing, collider: hit.collider.handle };
+      },
+    };
+    (window as unknown as { __polyworld?: typeof hook }).__polyworld = hook;
+    return () => {
+      delete (window as unknown as { __polyworld?: typeof hook }).__polyworld;
+    };
+  }, [world, rapier, bodyRef, colliderRef]);
 }

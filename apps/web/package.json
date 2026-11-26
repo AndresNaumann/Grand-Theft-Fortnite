@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@polyworld/worldgen": "workspace:*",
     "@react-three/drei": "10.7.9",
     "@react-three/fiber": "9.8.2",
     "@react-three/rapier": "2.2.0",

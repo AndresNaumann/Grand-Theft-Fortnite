@@ -1,0 +1,16 @@
+{
+  "name": "@polyworld/fetch-area",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@polyworld/worldgen": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.4"
+  }
+}
