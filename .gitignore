@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.vite/
+*.log
+.DS_Store
+coverage/
+
+# Raw OSM / bake caches (SPEC §5). Demo-area enrichment is committed explicitly in M5.
+data/*
+!data/.gitkeep

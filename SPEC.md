@@ -376,11 +376,11 @@ Expose `r3f-perf` or an equivalent stats overlay behind the debug toggle.
 Each milestone is one or more PRs. A milestone is done only when every box is checked.
 
 ### M0 — Scaffold
-- [ ] The pnpm monorepo matches the layout in §5; `pnpm dev` serves `apps/web`.
-- [ ] R3F canvas shows a flat ground plane, a sky gradient, and a sun.
-- [ ] A capsule character walks with WASD and the follow camera; Rapier ground collision works.
-- [ ] Vitest runs in `packages/worldgen` with at least one passing test.
-- [ ] CI (GitHub Actions) runs typecheck, lint, and test on PRs.
+- [x] The pnpm monorepo matches the layout in §5; `pnpm dev` serves `apps/web`.
+- [x] R3F canvas shows a flat ground plane, a sky gradient, and a sun.
+- [x] A capsule character walks with WASD and the follow camera; Rapier ground collision works.
+- [x] Vitest runs in `packages/worldgen` with at least one passing test.
+- [ ] CI (GitHub Actions) runs typecheck, lint, and test on PRs. *(Workflow written and every step passes locally; check this box after the first green run on GitHub.)*
 
 ### M1 — Real city from OSM
 - [ ] `tools/fetch-area` saves the configured bbox to `data/<area>.osm.json`.
@@ -434,6 +434,12 @@ Each milestone is one or more PRs. A milestone is done only when every box is ch
 | 2 | 2026-11-26 | Stylized look from OSM tags; no satellite imagery | Coherent art style at zero art cost; avoids imagery licensing. |
 | 3 | 2026-11-26 | AI at bake time only, never overriding OSM tags | Determinism, cost control, reproducible builds. |
 | 4 | 2026-11-26 | `packages/worldgen` is pure and shared by client and bake | One code path for runtime (M1) and bake (M4). |
+| 5 | 2026-11-26 | Toolchain pinned at M0: Node 26 LTS (`.nvmrc`), pnpm 9.15.4, Vite 8, Vitest 5, React 19, three 0.187, R3F 9, drei 10, `@react-three/rapier` 2.2. **TypeScript 6.0, not 7.** | Current majors at scaffold time. TS 7 is out, but `typescript-eslint` only supports TS < 6.1. Vite 8 and Vitest 5 require Node ≥ 22.12. |
+| 6 | 2026-11-26 | Dev deps added: ESLint 10 + `typescript-eslint` + `eslint-plugin-react-hooks` + `globals`; `@types/node`. | Needed for the M0 CI lint step. ESLint also enforces the worldgen purity rule (§15.2): `window`, `document`, `fetch`, and `Math.random` are errors in `packages/worldgen/src`. |
+| 7 | 2026-11-26 | The M0 debug overlay is drei `<Stats>` plus Rapier collider wireframes. `r3f-perf` is deferred to M2. | No new runtime dependency for M0. `r3f-perf`'s draw-call counter matters for the M2 ≤ 300 budget. |
+| 8 | 2026-11-26 | The canvas uses `NoToneMapping` (R3F `flat`), with the sun at 2.4 and the hemisphere light at 2.0. | Palette hexes render as authored. ACES tone mapping desaturated the palette. |
+| 9 | 2026-11-26 | Character adds a jump buffer (0.15 s) and coyote time (0.1 s) on top of §8.2. Jump is edge-triggered, so holding Space does not bunny-hop. | Taps shorter than one 60 Hz physics step were being dropped. Found in the M0 playtest. |
+| 10 | 2026-11-26 | M0 ships a movement test course (steps, wall, ramps) behind `WORLD.features.testCourse`. `rng.ts` landed in M0 as the subject of the required worldgen test. | Verifies autostep and collision before city geometry exists. `rng.ts` is tiny, and §15.2 depends on it. Disable the course in M1. |
 
 ## 14. Open questions
 
