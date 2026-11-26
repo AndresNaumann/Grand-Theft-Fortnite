@@ -10,6 +10,7 @@ function checkMesh(m: MeshBuffers) {
   const vcount = m.positions.length / 3;
   expect(m.normals.length).toBe(m.positions.length);
   expect(m.colors.length).toBe(m.positions.length);
+  expect(m.uvs.length).toBe((m.positions.length / 3) * 2);
   for (const i of m.indices) expect(i).toBeLessThan(vcount);
   for (let i = 0; i < m.normals.length; i += 3) {
     expect(Math.hypot(m.normals[i]!, m.normals[i + 1]!, m.normals[i + 2]!)).toBeCloseTo(1, 5);
@@ -52,7 +53,7 @@ describe("generateWorld on the Back Bay fixture", () => {
   });
 
   it("puts ground layers at their SPEC §6.6 heights", () => {
-    for (const name of ["areas", "water", "footways", "roads"] as const) {
+    for (const name of ["areas", "water", "footways", "roads", "markings"] as const) {
       const { positions } = world.layers[name];
       for (let i = 1; i < positions.length; i += 3) expect(positions[i]).toBeCloseTo(GROUND_LAYERS[name].y, 5);
     }
@@ -74,7 +75,13 @@ describe("generateWorld on the Back Bay fixture", () => {
 
   it("is deterministic: byte-identical buffers across runs (M1 acceptance)", () => {
     const again = generateWorld(loadFixture(), FIXTURE_CONFIG);
-    const buffers = (w: typeof world) => [...Object.values(w.layers).map((l) => l.positions), w.trees];
+    const buffers = (w: typeof world) => [
+      ...Object.values(w.layers).map((l) => l.positions),
+      w.trees,
+      w.furniture.stopSigns,
+      w.furniture.trafficLights,
+      w.furniture.streetLamps,
+    ];
     expect(hashBuffers(buffers(again))).toBe(hashBuffers(buffers(world)));
   });
 
@@ -84,10 +91,15 @@ describe("generateWorld on the Back Bay fixture", () => {
       world.layers.water.positions,
       world.layers.footways.positions,
       world.layers.roads.positions,
+      world.layers.markings.positions,
+      world.layers.sidewalks.positions,
       world.layers.buildings.positions,
       world.trees,
+      world.furniture.stopSigns,
+      world.furniture.trafficLights,
+      world.furniture.streetLamps,
     ];
-    expect(hashBuffers(positions)).toMatchInlineSnapshot(`"c9cfd156"`);
+    expect(hashBuffers(positions)).toMatchInlineSnapshot(`"0452e03d"`);
   });
 });
 

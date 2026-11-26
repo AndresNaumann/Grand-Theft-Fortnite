@@ -1,4 +1,5 @@
 import type { Tags } from "../types.ts";
+import { bikeLaneExtraWidth } from "./markings.ts";
 
 export const LANE_WIDTH = 3.5;
 
@@ -32,6 +33,7 @@ const UNDERGROUND = new Set(["yes", "building_passage", "culvert"]);
  * Road width and drivability (SPEC §6.5). Returns null for ways that aren't rendered
  * (unknown highway types, tunnels, areas).
  * `*_link` ways use their parent class. `lanes` overrides width when present.
+ * Painted bike lanes (`cycleway[:left|:right|:both]=lane|track`) add 1.5 m per side (M1.5).
  */
 export function resolveRoad(tags: Tags): RoadClass | null {
   const highway = tags["highway"];
@@ -42,7 +44,8 @@ export function resolveRoad(tags: Tags): RoadClass | null {
   const base = ROAD_TABLE[highway] ?? ROAD_TABLE[highway.replace(/_link$/, "")];
   if (!base) return null;
 
+  const bike = base.drivable ? bikeLaneExtraWidth(tags) : 0;
   const lanes = parseInt(tags["lanes"] ?? "", 10);
-  if (Number.isFinite(lanes) && lanes > 0) return { width: lanes * LANE_WIDTH, drivable: base.drivable };
-  return base;
+  if (Number.isFinite(lanes) && lanes > 0) return { width: lanes * LANE_WIDTH + bike, drivable: base.drivable };
+  return bike ? { width: base.width + bike, drivable: base.drivable } : base;
 }

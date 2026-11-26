@@ -2,11 +2,45 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-11-26T17:54:50Z",
+    "timestamp_osm_base": "2026-11-26T18:34:21Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
 
+{
+  "type": "node",
+  "id": 61341943,
+  "lat": 42.3503114,
+  "lon": -71.0798941,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "signal"
+  }
+},
+{
+  "type": "node",
+  "id": 7572746016,
+  "lat": 42.3510920,
+  "lon": -71.0804328,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "signal",
+    "traffic_signals:direction": "forward",
+    "traffic_signals:turn:forward": "all|not_right_on_red"
+  }
+},
+{
+  "type": "node",
+  "id": 7574238886,
+  "lat": 42.3496576,
+  "lon": -71.0795697,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "forward",
+    "traffic_signals:turn:forward": "all|not_right_on_red"
+  }
+},
 {
   "type": "node",
   "id": 7618650766,
@@ -183,6 +217,78 @@
 },
 {
   "type": "node",
+  "id": 7739163630,
+  "lat": 42.3511653,
+  "lon": -71.0799494,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7739163631,
+  "lat": 42.3511156,
+  "lon": -71.0801367,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7739163632,
+  "lat": 42.3510358,
+  "lon": -71.0801709,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7739163633,
+  "lat": 42.3510105,
+  "lon": -71.0803118,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7739163634,
+  "lat": 42.3510358,
+  "lon": -71.0803936,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7739163718,
+  "lat": 42.3511924,
+  "lon": -71.0804024,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
   "id": 7742277798,
   "lat": 42.3511543,
   "lon": -71.0804608,
@@ -249,6 +355,74 @@
 },
 {
   "type": "node",
+  "id": 7745806586,
+  "lat": 42.3497369,
+  "lon": -71.0789382,
+  "tags": {
+    "artwork_type": "sculpture",
+    "colour": "gold",
+    "height": "6.4",
+    "highway": "street_lamp",
+    "lamp_mount": "pole",
+    "lamp_type": "led",
+    "material": "bronze",
+    "tourism": "artwork",
+    "website": "https://www.sinceremetalworks.com/work/boston-marathon-memorial/"
+  }
+},
+{
+  "type": "node",
+  "id": 7745806588,
+  "lat": 42.3497379,
+  "lon": -71.0789107,
+  "tags": {
+    "artwork_type": "sculpture",
+    "colour": "gold",
+    "height": "6.4",
+    "highway": "street_lamp",
+    "lamp_mount": "pole",
+    "lamp_type": "led",
+    "material": "bronze",
+    "tourism": "artwork",
+    "website": "https://www.sinceremetalworks.com/work/boston-marathon-memorial/"
+  }
+},
+{
+  "type": "node",
+  "id": 7745806589,
+  "lat": 42.3497522,
+  "lon": -71.0788488,
+  "tags": {
+    "artwork_type": "sculpture",
+    "colour": "gold",
+    "height": "6.4",
+    "highway": "street_lamp",
+    "lamp_mount": "pole",
+    "lamp_type": "led",
+    "material": "bronze",
+    "tourism": "artwork",
+    "website": "https://www.sinceremetalworks.com/work/boston-marathon-memorial/"
+  }
+},
+{
+  "type": "node",
+  "id": 7745806590,
+  "lat": 42.3497648,
+  "lon": -71.0788259,
+  "tags": {
+    "artwork_type": "sculpture",
+    "colour": "gold",
+    "height": "6.4",
+    "highway": "street_lamp",
+    "lamp_mount": "pole",
+    "lamp_type": "led",
+    "material": "bronze",
+    "tourism": "artwork",
+    "website": "https://www.sinceremetalworks.com/work/boston-marathon-memorial/"
+  }
+},
+{
+  "type": "node",
   "id": 7759479376,
   "lat": 42.3510923,
   "lon": -71.0780331,
@@ -273,6 +447,110 @@
     "leaf_cycle": "deciduous",
     "leaf_type": "broadleaved",
     "natural": "tree"
+  }
+},
+{
+  "type": "node",
+  "id": 7759491986,
+  "lat": 42.3511384,
+  "lon": -71.0780549,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7761545684,
+  "lat": 42.3496549,
+  "lon": -71.0785516,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "suspended",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7761564985,
+  "lat": 42.3496426,
+  "lon": -71.0785923,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "suspended",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7761564986,
+  "lat": 42.3496312,
+  "lon": -71.0786349,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "suspended",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7761564987,
+  "lat": 42.3496212,
+  "lon": -71.0786688,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "suspended",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 7761564988,
+  "lat": 42.3496107,
+  "lon": -71.0787089,
+  "tags": {
+    "height": "5",
+    "highway": "street_lamp",
+    "lamp_mount": "suspended",
+    "lamp_type": "electric"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579841,
+  "lat": 42.3507584,
+  "lon": -71.0784627,
+  "tags": {
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "support": "pole"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579842,
+  "lat": 42.3507055,
+  "lon": -71.0786651,
+  "tags": {
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "support": "pole"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579848,
+  "lat": 42.3505470,
+  "lon": -71.0800830,
+  "tags": {
+    "highway": "street_lamp",
+    "support": "pole"
   }
 },
 {
@@ -313,6 +591,72 @@
   "tags": {
     "leaf_cycle": "deciduous",
     "natural": "tree"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579900,
+  "lat": 42.3502363,
+  "lon": -71.0804030,
+  "tags": {
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "support": "pole"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579901,
+  "lat": 42.3502816,
+  "lon": -71.0802233,
+  "tags": {
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "support": "pole"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579902,
+  "lat": 42.3502149,
+  "lon": -71.0799270,
+  "tags": {
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "support": "pole"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579903,
+  "lat": 42.3503992,
+  "lon": -71.0800138,
+  "tags": {
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "support": "pole"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579904,
+  "lat": 42.3505488,
+  "lon": -71.0792405,
+  "tags": {
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "support": "pole"
+  }
+},
+{
+  "type": "node",
+  "id": 12885579905,
+  "lat": 42.3506528,
+  "lon": -71.0788442,
+  "tags": {
+    "highway": "street_lamp",
+    "lamp_mount": "straight_mast",
+    "support": "pole"
   }
 },
 {

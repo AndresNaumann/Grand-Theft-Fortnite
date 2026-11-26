@@ -48,6 +48,8 @@ function WorldInfo() {
         `generateWorld     ${timings.generateMs.toFixed(0)} ms (worker)`,
         `buildings ${s.buildings} + ${s.buildingParts} parts (${s.outlinesSkippedForParts} outlines skipped)`,
         `roads ${s.roads} · footways ${s.footways} · areas ${s.areas} · water ${s.water}`,
+        `sidewalks ${s.sidewalks} · stripes ${s.stripes} · crosswalk bars ${s.crosswalkBars}`,
+        `stop ${s.stopSigns} · yield ${s.yieldSigns} · signals ${s.trafficLights} · lamps ${s.streetLamps} · name signs ${s.nameSigns}`,
         `trees ${s.trees} · triangles ${s.triangles.toLocaleString()}`,
       ].join("\n")}
     </pre>

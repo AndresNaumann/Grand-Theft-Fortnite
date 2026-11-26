@@ -19,15 +19,39 @@ export interface WorldgenConfig {
   origin: { lat: number; lon: number };
 }
 
-/** One merged, indexed triangle mesh. Colors are linear RGB (three.js vertex-color convention). */
+/**
+ * One merged, indexed triangle mesh. Colors are linear RGB (three.js vertex-color convention).
+ * UVs are "detail" coordinates for the procedural shaders (see MeshBuilder).
+ */
 export interface MeshBuffers {
   positions: Float32Array;
   normals: Float32Array;
   colors: Float32Array;
+  uvs: Float32Array;
   indices: Uint32Array;
 }
 
-export type LayerName = "areas" | "water" | "footways" | "roads" | "buildings";
+export type LayerName = "areas" | "water" | "footways" | "roads" | "markings" | "sidewalks" | "buildings";
+
+/** Floats per street-furniture instance: x, z, rotationY (local +z faces the viewer it serves). */
+export const PROP_STRIDE = 3;
+
+export interface NameSign {
+  /** Dedupe key (sorted name pair). */
+  key: string;
+  x: number;
+  z: number;
+  /** Two blades; local +x of each blade runs along its street. */
+  blades: { text: string; rotY: number }[];
+}
+
+export interface StreetFurniture {
+  stopSigns: Float32Array;
+  yieldSigns: Float32Array;
+  trafficLights: Float32Array;
+  streetLamps: Float32Array;
+  nameSigns: NameSign[];
+}
 
 export interface Bounds {
   minX: number;
@@ -43,6 +67,8 @@ export interface WorldGeometry {
   layers: Record<LayerName, MeshBuffers>;
   /** Packed tree instances, TREE_STRIDE floats each. */
   trees: Float32Array;
+  /** Signs, signals and lamps (M1.5). Packed PROP_STRIDE floats each. */
+  furniture: StreetFurniture;
   /** Suggested player spawn (capsule center), on a road or footway near the origin. */
   spawn: [number, number, number];
   /** The configured bbox in local meters. */
@@ -56,6 +82,14 @@ export interface WorldGeometry {
     areas: number;
     water: number;
     trees: number;
+    sidewalks: number;
+    stripes: number;
+    crosswalkBars: number;
+    stopSigns: number;
+    yieldSigns: number;
+    trafficLights: number;
+    streetLamps: number;
+    nameSigns: number;
     triangles: number;
   };
 }

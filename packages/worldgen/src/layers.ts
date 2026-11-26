@@ -9,4 +9,8 @@ export const GROUND_LAYERS = {
   water: { y: 0.03, renderOrder: 2 },
   footways: { y: 0.04, renderOrder: 3 },
   roads: { y: 0.05, renderOrder: 4 },
+  markings: { y: 0.06, renderOrder: 5 },
 } as const satisfies Partial<Record<LayerName, { y: number; renderOrder: number }>>;
+
+/** Sidewalk slab height (raised curbs, M1.5). Sidewalks are solid geometry, not a flat layer. */
+export const SIDEWALK_HEIGHT = 0.12;

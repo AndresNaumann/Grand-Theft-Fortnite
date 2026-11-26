@@ -33,12 +33,10 @@ async function loadOsm(req: WorkerRequest): Promise<OsmJson> {
 }
 
 function transferables(world: WorldGeometry): ArrayBuffer[] {
-  const out: ArrayBuffer[] = [world.trees.buffer as ArrayBuffer];
-  for (const l of Object.values(world.layers)) {
-    out.push(l.positions.buffer as ArrayBuffer, l.normals.buffer as ArrayBuffer);
-    out.push(l.colors.buffer as ArrayBuffer, l.indices.buffer as ArrayBuffer);
-  }
-  return out;
+  const f = world.furniture;
+  const arrays: ArrayBufferView[] = [world.trees, f.stopSigns, f.yieldSigns, f.trafficLights, f.streetLamps];
+  for (const l of Object.values(world.layers)) arrays.push(l.positions, l.normals, l.colors, l.uvs, l.indices);
+  return arrays.map((a) => a.buffer as ArrayBuffer);
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {

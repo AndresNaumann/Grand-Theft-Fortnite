@@ -16,6 +16,21 @@ export const PALETTE = {
   /** Tree trunks (not in SPEC §7.1 table; added in M1, see Decisions Log). */
   trunk: "#8D6346",
 
+  // Street detail (M1.5; see Decisions Log).
+  markingYellow: "#FFC93C",
+  bikeLane: "#36B37E",
+  curb: "#BFB3A0",
+  signRed: "#E63946",
+  signGreen: "#2E8B57",
+  signWhite: "#FFFFFF",
+  metal: "#5C6370",
+  lampPost: "#2B2D42",
+  lampGlobe: "#FFF4D6",
+  signalHousing: "#2B2D42",
+  signalRed: "#FF4D4D",
+  signalYellow: "#FFC93C",
+  signalGreen: "#3CDC7C",
+
   // Lighting tints (derived from the palette, SPEC §7.2).
   sun: "#FFF1D6",
   hemiSky: "#B3E5FC",

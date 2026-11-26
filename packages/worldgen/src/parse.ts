@@ -32,11 +32,22 @@ export interface PointFeature {
   coord: LonLat;
 }
 
+export interface StreetNode extends PointFeature {
+  /** OSM node id (to find the ways the node sits on). */
+  nodeId: number;
+  kind: StreetNodeKind;
+}
+
+export type StreetNodeKind = "stop" | "give_way" | "traffic_signals" | "street_lamp";
+const STREET_NODE_KINDS = new Set<string>(["stop", "give_way", "traffic_signals", "street_lamp"]);
+
 export interface ParsedOsm {
   polygons: PolygonFeature[];
   highways: LineFeature[];
   waterways: LineFeature[];
   trees: PointFeature[];
+  /** Stop/yield signs, traffic signals and street lamps (M1.5). */
+  streetNodes: StreetNode[];
 }
 
 const WATERWAY_LINES = new Set(["river", "canal", "stream"]);
@@ -62,10 +73,20 @@ function isInterestingPolygon(tags: Tags): boolean {
 export function parseOsm(data: OsmJson): ParsedOsm {
   const nodes = new Map<number, LonLat>();
   const trees: PointFeature[] = [];
+  const streetNodes: StreetNode[] = [];
+  const seenStreetNodes = new Set<number>();
   for (const el of data.elements) {
     if (el.type !== "node") continue;
     nodes.set(el.id, [el.lon, el.lat]);
-    if (el.tags?.["natural"] === "tree") trees.push({ id: `node/${el.id}`, tags: el.tags, coord: [el.lon, el.lat] });
+    const tags = el.tags;
+    if (!tags) continue;
+    if (tags["natural"] === "tree") trees.push({ id: `node/${el.id}`, tags, coord: [el.lon, el.lat] });
+    const hw = tags["highway"];
+    // Overpass may print a node twice (tagged in the union, untagged via `>`); keep the first tagged copy.
+    if (hw && STREET_NODE_KINDS.has(hw) && !seenStreetNodes.has(el.id)) {
+      seenStreetNodes.add(el.id);
+      streetNodes.push({ id: `node/${el.id}`, nodeId: el.id, tags, coord: [el.lon, el.lat], kind: hw as StreetNodeKind });
+    }
   }
 
   const highways: LineFeature[] = [];
@@ -104,5 +125,5 @@ export function parseOsm(data: OsmJson): ParsedOsm {
     }
   }
 
-  return { polygons, highways, waterways, trees };
+  return { polygons, highways, waterways, trees, streetNodes };
 }

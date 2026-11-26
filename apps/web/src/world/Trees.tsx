@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
-  BufferAttribute,
   ConeGeometry,
   CylinderGeometry,
   Euler,
@@ -12,19 +11,9 @@ import {
   type InstancedMesh,
 } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { hexToLinear, TREE_STRIDE } from "@polyworld/worldgen";
+import { TREE_STRIDE } from "@polyworld/worldgen";
 import { PALETTE } from "../style/palette";
-
-function painted(g: BufferGeometry, hex: string): BufferGeometry {
-  const ng = g.index ? g.toNonIndexed() : g;
-  const [r, gg, b] = hexToLinear(hex);
-  const n = ng.getAttribute("position").count;
-  const colors = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) colors.set([r, gg, b], i * 3);
-  ng.setAttribute("color", new BufferAttribute(colors, 3));
-  ng.deleteAttribute("uv");
-  return ng;
-}
+import { painted } from "./propGeometry";
 
 /** Low-poly tree models (SPEC §6.7): sphere-on-cylinder (round) and cone (conifer). Origin at the base. */
 function makeTreeGeometries(): [BufferGeometry, BufferGeometry] {

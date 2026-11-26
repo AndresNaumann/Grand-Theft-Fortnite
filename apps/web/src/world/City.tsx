@@ -1,8 +1,11 @@
 import { useEffect, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, RigidBody, TrimeshCollider } from "@react-three/rapier";
-import { BufferAttribute, BufferGeometry } from "three";
+import { BufferAttribute, BufferGeometry, MeshLambertMaterial, type Material } from "three";
 import { GROUND_LAYERS, type MeshBuffers, type WorldGeometry } from "@polyworld/worldgen";
 import { WORLD } from "../config/world.config";
+import { detailTime, makeDetailMaterial, type DetailKind } from "../style/detailMaterial";
+import { StreetFurniture } from "./StreetFurniture";
 import { Trees } from "./Trees";
 
 function toGeometry(m: MeshBuffers): BufferGeometry {
@@ -10,6 +13,7 @@ function toGeometry(m: MeshBuffers): BufferGeometry {
   g.setAttribute("position", new BufferAttribute(m.positions, 3));
   g.setAttribute("normal", new BufferAttribute(m.normals, 3));
   g.setAttribute("color", new BufferAttribute(m.colors, 3));
+  g.setAttribute("uv", new BufferAttribute(m.uvs, 2));
   g.setIndex(new BufferAttribute(m.indices, 1));
   g.computeBoundingSphere();
   return g;
@@ -21,37 +25,43 @@ function useGeometry(m: MeshBuffers): BufferGeometry {
   return g;
 }
 
+function useMaterial(make: () => Material, deps: unknown[]): Material {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const m = useMemo(make, deps);
+  useEffect(() => () => m.dispose(), [m]);
+  return m;
+}
+
 /**
  * One flat ground layer (SPEC §6.6). z-fighting is handled three ways:
  * baked y-offset, polygonOffset, and depthWrite=false with renderOrder so overlaps resolve by draw order.
  */
-function GroundLayer({ mesh, layer }: { mesh: MeshBuffers; layer: keyof typeof GROUND_LAYERS }) {
+function GroundLayer({ mesh, layer, detail }: { mesh: MeshBuffers; layer: keyof typeof GROUND_LAYERS; detail?: DetailKind }) {
   const geometry = useGeometry(mesh);
   const { renderOrder } = GROUND_LAYERS[layer];
+  const material = useMaterial(() => {
+    const params = {
+      vertexColors: true,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -renderOrder,
+      polygonOffsetUnits: -renderOrder * 4,
+    };
+    return detail ? makeDetailMaterial(detail, params) : new MeshLambertMaterial(params);
+  }, [detail, renderOrder]);
   if (mesh.indices.length === 0) return null;
-  return (
-    <mesh geometry={geometry} renderOrder={renderOrder}>
-      <meshLambertMaterial
-        vertexColors
-        depthWrite={false}
-        polygonOffset
-        polygonOffsetFactor={-renderOrder}
-        polygonOffsetUnits={-renderOrder * 4}
-      />
-    </mesh>
-  );
+  return <mesh geometry={geometry} material={material} renderOrder={renderOrder} />;
 }
 
-function Buildings({ mesh }: { mesh: MeshBuffers }) {
+/** Solid layer with its own fixed trimesh collider (SPEC §8.5): buildings, raised sidewalks. */
+function SolidLayer({ mesh, detail }: { mesh: MeshBuffers; detail: DetailKind }) {
   const geometry = useGeometry(mesh);
+  const material = useMaterial(() => makeDetailMaterial(detail, { vertexColors: true }), [detail]);
   if (mesh.indices.length === 0) return null;
   return (
     <RigidBody type="fixed" colliders={false}>
-      {/* SPEC §8.5: one fixed trimesh collider built from the merged building geometry. */}
       <TrimeshCollider args={[mesh.positions, mesh.indices]} />
-      <mesh geometry={geometry}>
-        <meshLambertMaterial vertexColors />
-      </mesh>
+      <mesh geometry={geometry} material={material} />
     </RigidBody>
   );
 }
@@ -76,15 +86,27 @@ function Boundary({ world }: { world: WorldGeometry }) {
   );
 }
 
+/** Advances the shared shader clock (water shimmer). */
+function DetailClock() {
+  useFrame((_, delta) => {
+    detailTime.value += delta;
+  });
+  return null;
+}
+
 export function City({ world }: { world: WorldGeometry }) {
   return (
     <>
-      <GroundLayer mesh={world.layers.areas} layer="areas" />
-      <GroundLayer mesh={world.layers.water} layer="water" />
-      <GroundLayer mesh={world.layers.footways} layer="footways" />
-      <GroundLayer mesh={world.layers.roads} layer="roads" />
-      <Buildings mesh={world.layers.buildings} />
+      <DetailClock />
+      <GroundLayer mesh={world.layers.areas} layer="areas" detail="grass" />
+      <GroundLayer mesh={world.layers.water} layer="water" detail="water" />
+      <GroundLayer mesh={world.layers.footways} layer="footways" detail="paving" />
+      <GroundLayer mesh={world.layers.roads} layer="roads" detail="asphalt" />
+      <GroundLayer mesh={world.layers.markings} layer="markings" />
+      <SolidLayer mesh={world.layers.sidewalks} detail="paving" />
+      <SolidLayer mesh={world.layers.buildings} detail="building" />
       <Trees data={world.trees} />
+      <StreetFurniture furniture={world.furniture} />
       <Boundary world={world} />
     </>
   );

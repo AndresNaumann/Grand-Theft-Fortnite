@@ -10,6 +10,7 @@ import {
   type RapierRigidBody,
 } from "@react-three/rapier";
 import type { Group, Object3D } from "three";
+import { useGame } from "../store";
 import { Avatar } from "./Avatar";
 import { type Control, look } from "./input";
 
@@ -205,6 +206,15 @@ function useDevTestHook(
       setYaw: (yaw: number) => {
         look.yaw = yaw;
       },
+      setPitch: (pitch: number) => {
+        look.pitch = pitch;
+      },
+      /** Move the player (capsule center) to local x, z. */
+      teleport: (x: number, z: number, y = 1.5) => {
+        bodyRef.current?.setTranslation({ x, y, z }, true);
+      },
+      /** The generated world (furniture positions, stats) for scripted checks. */
+      world: () => useGame.getState().world,
       /** First collider along a horizontal direction from the player's chest: distance (m), facing, handle. */
       castRay: (dx: number, dz: number, maxDistance = 200) => {
         const p = bodyRef.current?.translation();

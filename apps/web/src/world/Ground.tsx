@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
+import { makeDetailMaterial } from "../style/detailMaterial";
 import { PALETTE } from "../style/palette";
 
 const HALF_EXTENT = 1000; // m
@@ -19,15 +20,16 @@ export function Ground() {
     }
     return out;
   }, []);
+  const material = useMemo(() => makeDetailMaterial("grass", { color: PALETTE.grass }), []);
+  useEffect(() => () => material.dispose(), [material]);
 
   return (
     <RigidBody type="fixed" colliders={false}>
       {tiles.map(([x, z]) => (
         <CuboidCollider key={`${x},${z}`} args={[TILE / 2, 0.5, TILE / 2]} position={[x, -0.5, z]} />
       ))}
-      <mesh rotation-x={-Math.PI / 2} renderOrder={0}>
+      <mesh rotation-x={-Math.PI / 2} renderOrder={0} material={material}>
         <planeGeometry args={[HALF_EXTENT * 2, HALF_EXTENT * 2]} />
-        <meshLambertMaterial color={PALETTE.grass} />
       </mesh>
     </RigidBody>
   );

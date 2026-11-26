@@ -1,5 +1,5 @@
 import { hexToLinear } from "../color.ts";
-import { resolveHeight } from "../resolve/height.ts";
+import { LEVEL_HEIGHT, resolveHeight } from "../resolve/height.ts";
 import { buildingColors } from "../resolve/style.ts";
 import type { Polygon, Tags } from "../types.ts";
 import type { MeshBuilder } from "./builder.ts";
@@ -14,10 +14,14 @@ export interface BuildingInput {
 
 /** Bottom caps are only needed when the underside is visible (SPEC §8.5 note). */
 const BOTTOM_CAP_MIN_BASE = 0.5;
+/** Window bay width (SPEC §7.2). */
+export const BAY_WIDTH = 3;
 
 /**
  * Extrude footprints into prism buildings with flat roofs (SPEC §6.7).
  * Walls get flat per-face normals (4 vertices per edge). Per-building variation is in vertex colors.
+ * Wall UVs drive the procedural window shader (SPEC §7.2): u counts bays along each facade and
+ * v counts floors, both rounded to whole numbers so windows always fit the facade evenly.
  */
 export function buildBuildings(buildings: readonly BuildingInput[], mb: MeshBuilder): void {
   for (const b of buildings) {
@@ -26,24 +30,18 @@ export function buildBuildings(buildings: readonly BuildingInput[], mb: MeshBuil
     const wall = hexToLinear(colors.wall);
     const roof = hexToLinear(colors.roof);
     const poly = orientPolygon(b.poly);
+    const floors = Math.max(1, Math.round((top - base) / LEVEL_HEIGHT));
 
     for (const ring of poly) {
       for (let i = 0, n = ring.length; i < n; i++) {
-        const [ax, az] = ring[i]!;
-        const [bx, bz] = ring[(i + 1) % n]!;
-        const dx = bx - ax;
-        const dz = bz - az;
-        const len = Math.hypot(dx, dz);
+        const a = ring[i]!;
+        const c = ring[(i + 1) % n]!;
+        const len = Math.hypot(c[0] - a[0], c[1] - a[1]);
         if (len < 1e-3) continue;
-        // Left-hand normal; outward thanks to orientPolygon.
-        const nx = -dz / len;
-        const nz = dx / len;
-        const a0 = mb.vertex(ax, base, az, nx, 0, nz, wall);
-        const b0 = mb.vertex(bx, base, bz, nx, 0, nz, wall);
-        const b1 = mb.vertex(bx, top, bz, nx, 0, nz, wall);
-        const a1 = mb.vertex(ax, top, az, nx, 0, nz, wall);
-        mb.tri(a0, b0, b1);
-        mb.tri(a0, b1, a1);
+        // Facades shorter than ~1.5 m get no bays (u stays in [0, 0]) so the shader draws no windows.
+        const bays = len < BAY_WIDTH / 2 ? 0 : Math.max(1, Math.round(len / BAY_WIDTH));
+        // Right-of-travel normal is outward thanks to orientPolygon.
+        mb.wallQuad(a, c, base, top, wall, 0, bays, 0, floors);
       }
     }
 

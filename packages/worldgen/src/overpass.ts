@@ -1,7 +1,7 @@
 import type { BBox } from "./types.ts";
 
 /**
- * Overpass QL query for an area (SPEC §6.2). Builds the string only; never fetches.
+ * Overpass QL query for an area (SPEC §6.2; street-furniture nodes added in M1.5). Builds the string only; never fetches.
  * bbox order: south, west, north, east.
  */
 export function buildOverpassQuery(bbox: BBox, timeoutSeconds = 60): string {
@@ -18,6 +18,7 @@ export function buildOverpassQuery(bbox: BBox, timeoutSeconds = 60): string {
   relation["natural"="water"](${b});
   way["waterway"~"^(river|canal|stream)$"](${b});
   node["natural"="tree"](${b});
+  node["highway"~"^(stop|give_way|traffic_signals|street_lamp)$"](${b});
 );
 out body; >; out skel qt;`;
 }

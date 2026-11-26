@@ -1,82 +1,51 @@
 import type { RGB } from "../color.ts";
 import type { Vec2 } from "../types.ts";
 import type { MeshBuilder } from "./builder.ts";
+import { prepareLine } from "./polyline.ts";
 
-/** Miter length is clamped to this multiple of the half-width (SPEC §6.7: "clamp the miter at 2×"). */
-export const MITER_LIMIT = 2;
+export { MITER_LIMIT } from "./polyline.ts";
 const DISC_SEGMENTS = 16;
 
-/** Remove consecutive points closer than 1 cm. */
-function dedupe(pts: readonly Vec2[]): Vec2[] {
-  const out: Vec2[] = [];
-  for (const p of pts) {
-    const last = out[out.length - 1];
-    if (last && Math.hypot(p[0] - last[0], p[1] - last[1]) < 0.01) continue;
-    out.push(p);
-  }
-  return out;
+/** Flat ribbon along a polyline with mitered joins (SPEC §6.7). UVs: (arc length m, across -1..1). */
+export function addRibbon(mb: MeshBuilder, pts: readonly Vec2[], halfWidth: number, y: number, color: RGB): void {
+  const line = prepareLine(pts);
+  if (!line) return;
+  mb.offsetStrip(line, 0, line.length, -halfWidth, halfWidth, y, color);
 }
 
-/** Flat ribbon along a polyline with mitered joins (SPEC §6.7). */
-export function addRibbon(mb: MeshBuilder, pts: readonly Vec2[], halfWidth: number, y: number, color: RGB): void {
-  const p = dedupe(pts);
-  const n = p.length;
-  if (n < 2) return;
+/**
+ * Raised ribbon (a sidewalk slab): top surface at `height` plus curb faces down to y = 0 on both
+ * sides and at both ends. Curb faces point outward.
+ */
+export function addRaisedRibbon(mb: MeshBuilder, pts: readonly Vec2[], halfWidth: number, height: number, top: RGB, curb: RGB): void {
+  const line = prepareLine(pts);
+  if (!line) return;
+  const { left, right } = mb.offsetStrip(line, 0, line.length, -halfWidth, halfWidth, height, top);
+  const n = left.length;
+  // Right curb walks forward (faces right); left curb walks backward (faces left).
+  for (let k = 0; k < n - 1; k++) mb.wallQuad(right[k]!, right[k + 1]!, 0, height, curb);
+  for (let k = n - 1; k > 0; k--) mb.wallQuad(left[k]!, left[k - 1]!, 0, height, curb);
+  mb.wallQuad(left[0]!, right[0]!, 0, height, curb); // start cap faces backward
+  mb.wallQuad(right[n - 1]!, left[n - 1]!, 0, height, curb); // end cap faces forward
+}
 
-  // Left-hand unit normal per segment.
-  const nx: number[] = [];
-  const nz: number[] = [];
-  for (let i = 0; i < n - 1; i++) {
-    const dx = p[i + 1]![0] - p[i]![0];
-    const dz = p[i + 1]![1] - p[i]![1];
-    const len = Math.hypot(dx, dz);
-    nx.push(-dz / len);
-    nz.push(dx / len);
+/** Raised disc (sidewalk corner cap): top at `height` with a curb face around it. */
+export function addRaisedDisc(mb: MeshBuilder, x: number, z: number, radius: number, height: number, top: RGB, curb: RGB): void {
+  const SEG = 10;
+  const ring: Vec2[] = [];
+  for (let k = 0; k < SEG; k++) {
+    const a = (k / SEG) * Math.PI * 2;
+    ring.push([x + Math.cos(a) * radius, z + Math.sin(a) * radius]);
   }
-
-  const L: Vec2[] = [];
-  const R: Vec2[] = [];
-  for (let i = 0; i < n; i++) {
-    let mx: number;
-    let mz: number;
-    let len = halfWidth;
-    if (i === 0 || i === n - 1) {
-      const s = i === 0 ? 0 : n - 2;
-      mx = nx[s]!;
-      mz = nz[s]!;
-    } else {
-      const sx = nx[i - 1]! + nx[i]!;
-      const sz = nz[i - 1]! + nz[i]!;
-      const sl = Math.hypot(sx, sz);
-      if (sl < 1e-6) {
-        mx = nx[i]!;
-        mz = nz[i]!;
-      } else {
-        mx = sx / sl;
-        mz = sz / sl;
-        const cosHalf = mx * nx[i]! + mz * nz[i]!;
-        len = Math.min(halfWidth / Math.max(cosHalf, 1e-6), MITER_LIMIT * halfWidth);
-      }
-    }
-    const [px, pz] = p[i]!;
-    L.push([px + mx * len, pz + mz * len]);
-    R.push([px - mx * len, pz - mz * len]);
+  // v = 9 marks "no paver joints" for the paving shader (ribbon UVs stay within -1..1).
+  const center = mb.vertex(x, height, z, 0, 1, 0, top, 0, 9);
+  const idx = ring.map(([px, pz]) => mb.vertex(px, height, pz, 0, 1, 0, top, 0, 9));
+  for (let k = 0; k < SEG; k++) {
+    const k2 = (k + 1) % SEG;
+    mb.tri2D(center, idx[k]!, idx[k2]!, x, z, ring[k]![0], ring[k]![1], ring[k2]![0], ring[k2]![1]);
   }
-
-  const li: number[] = [];
-  const ri: number[] = [];
-  for (let i = 0; i < n; i++) {
-    li.push(mb.vertex(L[i]![0], y, L[i]![1], 0, 1, 0, color));
-    ri.push(mb.vertex(R[i]![0], y, R[i]![1], 0, 1, 0, color));
-  }
-  for (let i = 0; i < n - 1; i++) {
-    const [l0x, l0z] = L[i]!;
-    const [r0x, r0z] = R[i]!;
-    const [l1x, l1z] = L[i + 1]!;
-    const [r1x, r1z] = R[i + 1]!;
-    mb.tri2D(li[i]!, ri[i]!, li[i + 1]!, l0x, l0z, r0x, r0z, l1x, l1z);
-    mb.tri2D(ri[i]!, ri[i + 1]!, li[i + 1]!, r0x, r0z, r1x, r1z, l1x, l1z);
-  }
+  // Walk the ring backward so each face's right-of-travel normal points outward.
+  for (let k = SEG; k > 0; k--) mb.wallQuad(ring[k % SEG]!, ring[k - 1]!, 0, height, curb);
 }
 
 /** Flat disc, used as the MVP junction cap (SPEC §6.7). */
@@ -103,29 +72,41 @@ export interface RoadInput {
   halfWidth: number;
 }
 
+export interface JunctionInfo {
+  x: number;
+  z: number;
+  /** Incident way-ends (a through-way counts 2). */
+  degree: number;
+  /** Widest incident half-width. */
+  radius: number;
+}
+
+/** Junction nodes (degree >= 3) of a road network, keyed by OSM node id. */
+export function findJunctions(ways: readonly RoadInput[]): Map<number, JunctionInfo> {
+  const degree = new Map<number, JunctionInfo>();
+  for (const w of ways) {
+    const last = w.nodeIds.length - 1;
+    w.nodeIds.forEach((id, k) => {
+      const d = degree.get(id) ?? { degree: 0, radius: 0, x: w.pts[k]![0], z: w.pts[k]![1] };
+      d.degree += k === 0 || k === last ? 1 : 2;
+      d.radius = Math.max(d.radius, w.halfWidth);
+      degree.set(id, d);
+    });
+  }
+  const out = new Map<number, JunctionInfo>();
+  // Sort by node id so iteration order never depends on input order quirks.
+  for (const [id, d] of [...degree.entries()].sort((a, b) => a[0] - b[0])) if (d.degree >= 3) out.set(id, d);
+  return out;
+}
+
 /**
  * One road layer: a ribbon per way plus a disc at every junction node.
  * A node is a junction when its degree (incident way segments) is >= 3; a through-way counts 2.
  * Discs use the widest incident way's half-width.
  */
-export function buildRoadLayer(ways: readonly RoadInput[], y: number, color: RGB, mb: MeshBuilder): number {
-  const degree = new Map<number, { count: number; hw: number; x: number; z: number }>();
-  for (const w of ways) {
-    addRibbon(mb, w.pts, w.halfWidth, y, color);
-    const last = w.nodeIds.length - 1;
-    w.nodeIds.forEach((id, k) => {
-      const d = degree.get(id) ?? { count: 0, hw: 0, x: w.pts[k]![0], z: w.pts[k]![1] };
-      d.count += k === 0 || k === last ? 1 : 2;
-      d.hw = Math.max(d.hw, w.halfWidth);
-      degree.set(id, d);
-    });
-  }
-  let junctions = 0;
-  // Sort by node id so output order never depends on Map insertion quirks.
-  for (const [, d] of [...degree.entries()].sort((a, b) => a[0] - b[0])) {
-    if (d.count < 3) continue;
-    addDisc(mb, d.x, d.z, d.hw, y, color);
-    junctions++;
-  }
+export function buildRoadLayer(ways: readonly RoadInput[], y: number, color: RGB, mb: MeshBuilder): Map<number, JunctionInfo> {
+  for (const w of ways) addRibbon(mb, w.pts, w.halfWidth, y, color);
+  const junctions = findJunctions(ways);
+  for (const j of junctions.values()) addDisc(mb, j.x, j.z, j.radius, y, color);
   return junctions;
 }
